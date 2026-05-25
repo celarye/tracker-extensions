@@ -31,9 +31,23 @@ export default async function makeRequest<ResponseType, QueryVariablesType = nev
       throw new Error("You are not authenticated, please log in through the AniList settings");
     }
 
-    const payload = JSON.parse(
-      Application.base64Decode(token.split(".")[1]) as string,
-    ) as JwtPayload;
+    const payload_section = token.split(".")[1];
+
+    if (payload_section === undefined) {
+      //Application.setSecureState(null, "session");
+      console.log(`No payload section: ${token}`);
+      throw new Error("Invalid JWT payload (undefined)");
+    }
+
+    const payload_string = Application.base64Decode(payload_section);
+
+    if (payload_string instanceof ArrayBuffer) {
+      //Application.setSecureState(null, "session");
+      console.log(`Invalid payload section: ${token}`);
+      throw new Error("Invalid JWT payload (non base64 decodable)");
+    }
+
+    const payload = JSON.parse(payload_string) as JwtPayload;
 
     if (Number(payload.exp) < new Date().valueOf() / 1000) {
       Application.setSecureState(null, "session");

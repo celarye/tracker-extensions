@@ -223,9 +223,23 @@ class ProfileViewForm extends Form {
   getSessionSection(): ListSectionElement {
     const token = String(Application.getSecureState("session"));
 
-    const payload = JSON.parse(
-      Application.base64Decode(token.split(".")[1]) as string,
-    ) as JwtPayload;
+    const payload_section = token.split(".")[1];
+
+    if (payload_section === undefined) {
+      //Application.setSecureState(null, "session");
+      console.log(`No payload section: ${token}`);
+      throw new Error("Invalid JWT payload (undefined)");
+    }
+
+    const payload_string = Application.base64Decode(payload_section);
+
+    if (payload_string instanceof ArrayBuffer) {
+      //Application.setSecureState(null, "session");
+      console.log(`Invalid payload section: ${token}`);
+      throw new Error("Invalid JWT payload (non base64 decodable)");
+    }
+
+    const payload = JSON.parse(payload_string) as JwtPayload;
 
     const rows: FormItemElement<unknown>[] = [];
     for (const [key, value] of Object.entries(payload)) {
